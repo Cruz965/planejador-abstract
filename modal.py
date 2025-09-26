@@ -56,6 +56,9 @@ class EditModal:
         
         self.scroll_y = 0
         self.body_cursor_rect = pygame.Rect(0, 0, 0, 0)
+        self.title_history = []
+        self.body_history = []
+
     
     def _save_changes_and_close(self):
         self.task.title = self.title_text
@@ -204,17 +207,29 @@ class EditModal:
                             start, end = min(self.title_selection_start, self.title_selection_end), max(self.title_selection_start, self.title_selection_end)
                             pyperclip.copy(self.title_text[start:end])
                     elif event.key == pygame.K_x:
+                        self.title_history.append(self.title_text)
                         if self.title_selection_start != self.title_selection_end:
                             start, end = min(self.title_selection_start, self.title_selection_end), max(self.title_selection_start, self.title_selection_end)
                             pyperclip.copy(self.title_text[start:end])
                             self.title_text = self.title_text[:start] + self.title_text[end:]
                             self.title_selection_start = self.title_selection_end = start
                     elif event.key == pygame.K_v:
+                        self.title_history.append(self.title_text)
                         start, end = min(self.title_selection_start, self.title_selection_end), max(self.title_selection_start, self.title_selection_end)
                         clipboard_text = pyperclip.paste()
                         self.title_text = self.title_text[:start] + clipboard_text + self.title_text[end:]
                         self.title_selection_start = self.title_selection_end = start + len(clipboard_text)
+                    elif event.key == pygame.K_z:
+                        print("\n--- Tentativa de Desfazer (Ctrl+Z) ---")
+                        print(f"Histórico antes de 'pop': {self.title_history}")
+                        if self.title_history: # Verifica se o histórico não está vazio
+                            self.title_text = self.title_history.pop()
+                            self.title_selection_start = self.title_selection_end = len(self.title_text)
+                            print(f"SUCESSO! Texto restaurado para: '{self.title_text}'")
+                        else:
+                            print("FALHA! O histórico está vazio.")
                 elif event.key == pygame.K_BACKSPACE:
+                    self.title_history.append(self.title_text)
                     if self.title_selection_start != self.title_selection_end:
                         start, end = min(self.title_selection_start, self.title_selection_end), max(self.title_selection_start, self.title_selection_end)
                         self.title_text = self.title_text[:start] + self.title_text[end:]
@@ -223,8 +238,10 @@ class EditModal:
                         pos = self.title_selection_end
                         self.title_text = self.title_text[:pos-1] + self.title_text[pos:]
                         self.title_selection_start = self.title_selection_end = pos - 1
+               
                 elif event.key == pygame.K_RETURN: self.active_field = None
                 else:
+                    self.title_history.append(self.title_text)
                     start, end = min(self.title_selection_start, self.title_selection_end), max(self.title_selection_start, self.title_selection_end)
                     self.title_text = self.title_text[:start] + event.unicode + self.title_text[end:]
                     self.title_selection_start = self.title_selection_end = start + len(event.unicode)
@@ -240,19 +257,26 @@ class EditModal:
                             start, end = min(self.body_selection_start, self.body_selection_end), max(self.body_selection_start, self.body_selection_end)
                             pyperclip.copy(self.body_text[start:end])
                     elif event.key == pygame.K_x:
+                        self.title_history.append(self.title_text)
                         if self.body_selection_start != self.body_selection_end:
                             start, end = min(self.body_selection_start, self.body_selection_end), max(self.body_selection_start, self.body_selection_end)
                             pyperclip.copy(self.body_text[start:end])
                             self.body_text = self.body_text[:start] + self.body_text[end:]
                             self.body_selection_start = self.body_selection_end = start
                     elif event.key == pygame.K_v:
+                        self.title_history.append(self.title_text)
                         start, end = min(self.body_selection_start, self.body_selection_end), max(self.body_selection_start, self.body_selection_end)
                         clipboard_text = pyperclip.paste()
                         self.body_text = self.body_text[:start] + clipboard_text + self.body_text[end:]
                         self.body_selection_start = self.body_selection_end = start + len(clipboard_text)
+                    elif event.key == pygame.K_z:
+                        if self.body_history: # Verifica se o histórico não está vazio
+                            self.body_text = self.body_history.pop()
+                            self.body_selection_start = self.body_selection_end = len(self.body_text)
 
                 # Teclas de Ação (Backspace, Enter, Setas)
                 elif event.key == pygame.K_BACKSPACE:
+                    self.title_history.append(self.title_text)
                     if self.body_selection_start != self.body_selection_end:
                         start, end = min(self.body_selection_start, self.body_selection_end), max(self.body_selection_start, self.body_selection_end)
                         self.body_text = self.body_text[:start] + self.body_text[end:]
@@ -276,10 +300,14 @@ class EditModal:
                     self.body_selection_start = self.body_selection_end = new_pos
                 
                 # Digitação Normal
-                else:
+                else: # Digitação normal para o CORPO
+                    self.body_history.append(self.body_text)
                     start, end = min(self.body_selection_start, self.body_selection_end), max(self.body_selection_start, self.body_selection_end)
                     self.body_text = self.body_text[:start] + event.unicode + self.body_text[end:]
                     self.body_selection_start = self.body_selection_end = start + len(event.unicode)
+                    
+                    # ### ADICIONE ESTA LINHA AQUI ###
+                    print(f"Histórico do Título agora: {self.title_history}")
                 lines = self.body_text.split('\n')
                 char_count = 0
                 cursor_line_index = 0

@@ -1,0 +1,39 @@
+BUGS E MELHORIAS A FAZER - Planejador de Abstração
+Data: 26 de Setembro de 2025
+
+1. Bug do Auto-Scroll: O cursor escapa da caixa de texto da Descrição
+Sintomas:
+Ao digitar ou pressionar Enter perto do fundo da caixa de "Descrição", o cursor | é desenhado fora da área visível. A rolagem manual com a roda do rato funciona, mas a rolagem automática que deveria seguir o cursor falha, especialmente para baixo.
+
+Causa Raiz Provável:
+Existe um atraso de um "frame" (ciclo do jogo) entre a lógica que move o cursor (handle_event) e a lógica que desenha o ecrã (draw). A função de auto-scroll (_ensure_cursor_visible) é chamada, mas pode estar a usar uma posição em pixels do cursor que foi calculada no frame anterior, resultando num ajuste de rolagem incorreto ou tardio.
+
+Solução Proposta:
+Refatorar a lógica para garantir que o cálculo da posição do cursor e o ajuste da rolagem aconteçam na mesma etapa, antes do desenho.
+
+Criar um método auxiliar robusto, _update_body_cursor_rect(), que calcula a posição exata do cursor em pixels com base no texto atual e na rolagem atual.
+
+No handle_event, após qualquer KEYDOWN no campo do corpo, chamar _update_body_cursor_rect() primeiro.
+
+Imediatamente a seguir, chamar _ensure_cursor_visible(). Esta função agora usará a posição correta e recém-calculada para ajustar self.scroll_y.
+
+O método draw deve ser simplificado para apenas desenhar o cursor na posição que já foi calculada e guardada em self.body_cursor_rect.
+
+2. Bug no Desfazer (Ctrl+Z): Restaurar um "Recortar" (Ctrl+X) é impreciso
+Sintomas:
+Após selecionar um texto (ex: "abc") com Ctrl+A e recortá-lo com Ctrl+X, ao pressionar Ctrl+Z para desfazer, o texto restaurado aparece incompleto (ex: "ab"), faltando a última letra.
+
+Causa Raiz Provável:
+O nosso sistema de histórico atual é demasiado simples (apenas uma lista para "Desfazer"). Ele não gere corretamente a sequência de estados, especialmente em ações compostas como Recortar. A falta de um sistema de "Refazer" (Redo) torna o histórico frágil e propenso a este tipo de erro de estado.
+
+Solução Proposta:
+Implementar um sistema de Desfazer/Refazer (Undo/Redo) completo.
+
+No __init__, adicionar duas novas listas: self.title_redo_history e self.body_redo_history.
+
+Sempre que o utilizador fizer uma nova edição (digitar, colar, recortar), o redo_history correspondente deve ser limpo (.clear()).
+
+Ao usar Ctrl+Z (Desfazer), antes de restaurar o estado antigo do history, o estado atual deve ser movido para o redo_history.
+
+Implementar Ctrl+Y (Refazer), que faz a operação inversa: move o estado atual para o history e restaura o último estado do redo_history.
+
