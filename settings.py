@@ -70,3 +70,10 @@ TAMANHO_FONTE_TITULO = 18
 TAMANHO_FONTE_CORPO = 16 # ### NOVO
 TAMANHO_FONTE_MENU = 16
 PADDING_TITULO_ELIPSE = 5
+# ### ADICIONE ESTA CONSTANTE ###
+MODAL_BODY_SCROLL_SPEED = 20 # pixels por "tick" da roda do rato
+# ### NOVO: Configurações da Scrollbar ###
+SCROLLBAR_WIDTH = 15
+SCROLLBAR_TRACK_COLOR = (220, 220, 220) # Cinza claro para a pista de fundo
+SCROLLBAR_THUMB_COLOR = (160, 160, 160) # Cinza mais escuro para a parte móvel
+SCROLLBAR_MIN_THUMB_HEIGHT = 20         # Altura mínima para o polegar não desaparecer

@@ -53,6 +53,8 @@ class EditModal:
             self.modal_rect.bottom - self.title_input_rect.bottom - (padding * 3) - self.concluido_button_rect.height - label_height
         )
         self.is_selecting = False
+        
+        self.scroll_y = 0
     
     def _save_changes_and_close(self):
         self.task.title = self.title_text
@@ -101,24 +103,49 @@ class EditModal:
         return char_index + len(line_text)
 
     def handle_event(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            if self.close_button_rect.collidepoint(event.pos): return 'close'
-            if self.concluido_button_rect.collidepoint(event.pos): return self._save_changes_and_close()
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            # Lógica do scroll
+            if event.button == 4 or event.button == 5:
+                if self.body_input_rect.collidepoint(event.pos):
+                    if event.button == 4: # Roda para cima
+                        self.scroll_y -= settings.MODAL_BODY_SCROLL_SPEED
+                    elif event.button == 5: # Roda para baixo
+                        self.scroll_y += settings.MODAL_BODY_SCROLL_SPEED
 
-            if self.title_input_rect.collidepoint(event.pos):
-                self.active_field = 'title'
-                cursor_pos = self._get_char_index_from_pos(event.pos)
-                self.title_selection_start = self.title_selection_end = cursor_pos
-                self.is_selecting = True
-            elif self.body_input_rect.collidepoint(event.pos):
-                self.active_field = 'body'
-                # ### ALTERADO: Usa o novo método para o corpo ###
-                cursor_pos = self._get_body_char_index_from_pos(event.pos)
-                self.body_selection_start = self.body_selection_end = cursor_pos
-                self.is_selecting = True
-            else:
-                self.active_field = None
-                self.is_selecting = False
+                    # ### ADICIONE/ALTERE ESTE BLOCO DE CÓDIGO ###
+                    # Garante que não rolamos para cima do início
+                    self.scroll_y = max(0, self.scroll_y)
+                    
+                    # Calcula o limite máximo de rolagem para baixo
+                    lines = self.body_text.split('\n')
+                    total_text_height = len(lines) * self.font_corpo.get_height()
+                    visible_height = self.body_input_rect.height - (settings.MODAL_INPUT_PADDING * 2)
+                    max_scroll = max(0, total_text_height - visible_height)
+                    
+                    # Garante que não rolamos para baixo do fim
+                    self.scroll_y = min(self.scroll_y, max_scroll)
+                    
+                    print(f"Scroll Y: {self.scroll_y} (Max: {max_scroll})") # Print de depuração útil
+
+            # --- Lógica do Clique Esquerdo (Botão 1) ---
+            elif event.button == 1:
+                # O seu código funcional para o clique esquerdo vem aqui
+                if self.close_button_rect.collidepoint(event.pos): return 'close'
+                if self.concluido_button_rect.collidepoint(event.pos): return self._save_changes_and_close()
+
+                if self.title_input_rect.collidepoint(event.pos):
+                    self.active_field = 'title'
+                    cursor_pos = self._get_char_index_from_pos(event.pos)
+                    self.title_selection_start = self.title_selection_end = cursor_pos
+                    self.is_selecting = True
+                elif self.body_input_rect.collidepoint(event.pos):
+                    self.active_field = 'body'
+                    cursor_pos = self._get_body_char_index_from_pos(event.pos)
+                    self.body_selection_start = self.body_selection_end = cursor_pos
+                    self.is_selecting = True
+                else:
+                    self.active_field = None
+                    self.is_selecting = False
 
         if event.type == pygame.MOUSEMOTION:
             if self.is_selecting:
@@ -229,9 +256,29 @@ class EditModal:
                     start, end = min(self.body_selection_start, self.body_selection_end), max(self.body_selection_start, self.body_selection_end)
                     self.body_text = self.body_text[:start] + event.unicode + self.body_text[end:]
                     self.body_selection_start = self.body_selection_end = start + len(event.unicode)
+                lines = self.body_text.split('\n')
+                char_count = 0
+                cursor_line_index = 0
+                for i, line in enumerate(lines):
+                    if char_count + len(line) >= self.body_selection_end:
+                        cursor_line_index = i
+                        break
+                    char_count += len(line) + 1
+                
+                line_height = self.font_corpo.get_height()
+                # Posição Y do cursor relativa ao topo da caixa de texto
+                cursor_y_rel = (cursor_line_index * line_height)
+                
+                # Área visível
+                visible_height = self.body_input_rect.height - (settings.MODAL_INPUT_PADDING * 2)
+                
+                # Verifica se o cursor está fora dos limites visíveis
+                if cursor_y_rel < self.scroll_y:
+                    self.scroll_y = cursor_y_rel
+                elif cursor_y_rel + line_height > self.scroll_y + visible_height:
+                    self.scroll_y = cursor_y_rel + line_height - visible_height
 
-
-            return None
+        return None
     
     # update e draw não mudam
     def update(self):
@@ -301,18 +348,20 @@ class EditModal:
             title_surface = self.font_titulo.render(self.title_text, True, settings.COR_TEXTO_TITULO)
             screen.blit(title_surface, (self.title_input_rect.x + settings.MODAL_INPUT_PADDING, self.title_input_rect.y + settings.MODAL_INPUT_PADDING))
 
-        # Desenho do Campo de Corpo
+        # --- Desenho do Campo de Corpo ---
         pygame.draw.rect(screen, settings.MODAL_INPUT_BG_COLOR, self.body_input_rect)
         border_color_body = settings.MODAL_INPUT_BORDER_ACTIVE if self.active_field == 'body' else settings.MODAL_INPUT_BORDER_INACTIVE
         pygame.draw.rect(screen, border_color_body, self.body_input_rect, 2)
 
         lines = self.body_text.split('\n')
-        y_offset = self.body_input_rect.y + settings.MODAL_INPUT_PADDING
+        
+        # ### ALTERE ESTA LINHA ###
+        y_offset = self.body_input_rect.y + settings.MODAL_INPUT_PADDING - self.scroll_y
+        
         char_index = 0
         sel_start, sel_end = min(self.body_selection_start, self.body_selection_end), max(self.body_selection_start, self.body_selection_end)
-
-        # ### CORRECÇÃO: Inicializa as variáveis do cursor ANTES do loop ###
-        cursor_y, cursor_x = -1, -1
+        
+        cursor_y, cursor_x = -1, -1 # Mantemos isto para a lógica do cursor
 
         for line in lines:
             line_len = len(line)
