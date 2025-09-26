@@ -108,6 +108,12 @@ class EditModal:
                         if self.title_selection_start != self.title_selection_end:
                             start, end = min(self.title_selection_start, self.title_selection_end), max(self.title_selection_start, self.title_selection_end)
                             pyperclip.copy(self.title_text[start:end])
+                    elif event.key == pygame.K_x:
+                        if self.title_selection_start != self.title_selection_end:
+                            start, end = min(self.title_selection_start, self.title_selection_end), max(self.title_selection_start, self.title_selection_end)
+                            pyperclip.copy(self.title_text[start:end])
+                            self.title_text = self.title_text[:start] + self.title_text[end:]
+                            self.title_selection_start = self.title_selection_end = start
                     elif event.key == pygame.K_v:
                         start, end = min(self.title_selection_start, self.title_selection_end), max(self.title_selection_start, self.title_selection_end)
                         clipboard_text = pyperclip.paste()
@@ -137,6 +143,12 @@ class EditModal:
                         if self.body_selection_start != self.body_selection_end:
                             start, end = min(self.body_selection_start, self.body_selection_end), max(self.body_selection_start, self.body_selection_end)
                             pyperclip.copy(self.body_text[start:end])
+                    elif event.key == pygame.K_x:
+                        if self.body_selection_start != self.body_selection_end:
+                            start, end = min(self.body_selection_start, self.body_selection_end), max(self.body_selection_start, self.body_selection_end)
+                            pyperclip.copy(self.body_text[start:end])
+                            self.body_text = self.body_text[:start] + self.body_text[end:]
+                            self.body_selection_start = self.body_selection_end = start
                     elif event.key == pygame.K_v:
                         start, end = min(self.body_selection_start, self.body_selection_end), max(self.body_selection_start, self.body_selection_end)
                         clipboard_text = pyperclip.paste()
@@ -273,6 +285,14 @@ class EditModal:
 
             # Reseta a área de recorte
             screen.set_clip(None)
-            
+            if self.active_field == 'body' and self.body_selection_start == self.body_selection_end:
+                if line_start_index <= self.body_selection_end <= line_end_index:
+                    local_cursor_pos = self.body_selection_end - line_start_index
+                    text_up_to_cursor = line[:local_cursor_pos]
+                    cursor_x = self.body_input_rect.x + settings.MODAL_INPUT_PADDING + self.font_corpo.size(text_up_to_cursor)[0]
+                    cursor_y = y_offset
             y_offset += self.font_corpo.get_height()
             char_index += line_len + 1
+        if self.active_field == 'body' and self.cursor_visible and cursor_y != -1:
+            cursor_height = self.font_corpo.get_height()
+            pygame.draw.line(screen, settings.COR_TEXTO_TITULO, (cursor_x, cursor_y), (cursor_x, cursor_y + cursor_height), 2)
