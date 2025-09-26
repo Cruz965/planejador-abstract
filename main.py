@@ -3,6 +3,7 @@ import sys
 import json
 import os
 import settings
+from modal import EditModal # ### NOVO: Importamos a nossa nova classe
 from task import TaskNode 
 
 # --- INICIALIZAÇÃO --- (Sem alterações)
@@ -45,7 +46,7 @@ offset_x = 0
 offset_y = 0
 context_menu = {'active': False, 'pos': (0, 0), 'task': None, 'options': []}
 last_click_time = 0 # ### NOVO: Para registrar o tempo do último clique
-
+active_modal = None # ### ALTERADO: De 'tarefa_em_edicao' para 'active_modal'
 
 # --- FUNÇÃO DE DESENHO DO MENU --- (Sem alterações)
 def draw_context_menu():
@@ -85,6 +86,14 @@ while True:
             sys.exit()
 
         # ### NOVO: Lógica para voltar ao nível anterior
+         # --- LÓGICA DE EVENTOS ---
+        
+        # Se um modal está ativo, ele consome todos os eventos
+        if active_modal:
+            result = active_modal.handle_event(event)
+            if result == 'close':
+                active_modal = None
+            continue # Pula o resto da lógica de eventos
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 if current_node.parent: # Só volta se não estivermos na raiz
@@ -98,6 +107,9 @@ while True:
                     for option in context_menu['options']:
                         if option['enabled'] and 'rect' in option and option['rect'].collidepoint(event.pos):
                             action_text = option['text']
+                            if action_text == 'Editar':
+                                # ### ALTERADO: Agora criamos uma instância do EditModal
+                                active_modal = EditModal(context_menu['task'])
 
                             if action_text == 'Criar Nova Tarefa':
                                 new_pos = context_menu['pos']
@@ -178,5 +190,6 @@ while True:
             tela.blit(elipse_surface, elipse_rect)
 
     draw_context_menu()
-
+    if active_modal:
+        active_modal.draw(tela)
     pygame.display.flip()
