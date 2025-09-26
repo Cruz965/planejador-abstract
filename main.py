@@ -8,6 +8,7 @@ ARQUIVO_SAVE = "projeto.json"
 LARGURA_TELA, ALTURA_TELA = 1280, 720
 COR_FUNDO = (240, 240, 240)
 COR_RETANGULO = (255, 255, 255)
+COR_RETANGULO_COM_FILHOS = (210, 245, 210)
 COR_BORDA_RETANGULO = (0, 0, 0)
 COR_TEXTO_TITULO = (20, 20, 20)
 COR_TEXTO_CORPO = (80, 80, 80)
@@ -26,6 +27,7 @@ PADDING_TITULO_ELIPSE = 5
 MENU_PADDING_ABS = int(LARGURA_TELA * 0.008)
 MENU_MIN_WIDTH_ABS = int(LARGURA_TELA * 0.12)
 MENU_ITEM_SPACING = 5
+DOUBLE_CLICK_TIME = 500 
 ARQUIVO_SAVE = "projeto.json"
 # --- INICIALIZAÇÃO --- (Sem alterações)
 pygame.init()
@@ -59,13 +61,15 @@ def carregar_projeto(filename):
 
 # --- ESTRUTURA DE DADOS ---
 root_node = carregar_projeto(ARQUIVO_SAVE)
-current_node = root_node 
+current_node = root_node  
 
-# --- CONTROLE DE INTERAÇÃO --- (Sem alterações)
+# --- CONTROLE DE INTERAÇÃO ---
 selected_task_drag = None
 offset_x = 0
 offset_y = 0
 context_menu = {'active': False, 'pos': (0, 0), 'task': None, 'options': []}
+last_click_time = 0 # ### NOVO: Para registrar o tempo do último clique
+
 
 # --- FUNÇÃO DE DESENHO DO MENU --- (Sem alterações)
 def draw_context_menu():
@@ -103,10 +107,17 @@ while True:
             salvar_projeto(root_node, ARQUIVO_SAVE)
             pygame.quit()
             sys.exit()
+
+        # ### NOVO: Lógica para voltar ao nível anterior
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                if current_node.parent: # Só volta se não estivermos na raiz
+                    current_node = current_node.parent
+
         if event.type == pygame.MOUSEBUTTONDOWN:
             clicked_on_task = next((task for task in current_node.children if task.rect.collidepoint(event.pos)), None)
             
-            if event.button == 1:
+            if event.button == 1: # Botão Esquerdo
                 if context_menu['active']:
                     for option in context_menu['options']:
                         if option['enabled'] and 'rect' in option and option['rect'].collidepoint(event.pos):
@@ -117,23 +128,35 @@ while True:
                                 nova_tarefa = TaskNode(title="Nova Tarefa", body="", parent=current_node, pos=new_pos, size=TAMANHO_RETANGULO)
                                 current_node.add_child(nova_tarefa)
                             
-                            ### NOVO: IMPLEMENTAÇÃO DO DELETAR ###
                             elif action_text == 'Deletar':
                                 task_to_delete = context_menu['task']
                                 if task_to_delete in current_node.children:
                                     current_node.children.remove(task_to_delete)
                             
+                            # ### ALTERADO: Ação "Abrir" do menu
+                            elif action_text == 'Abrir':
+                                current_node = context_menu['task']
+
                             else:
-                                print(f"Ação: '{action_text}' selecionada para a tarefa: '{context_menu['task'].title if context_menu['task'] else 'Nenhuma'}'")
+                                print(f"Ação: '{action_text}' selecionada")
                             break
                     context_menu['active'] = False
-                else:
+                else: # Se o menu não estiver ativo
                     if clicked_on_task:
-                        selected_task_drag = clicked_on_task
-                        offset_x = selected_task_drag.rect.x - event.pos[0]
-                        offset_y = selected_task_drag.rect.y - event.pos[1]
+                        # ### ALTERADO: Lógica de duplo-clique
+                        current_time = pygame.time.get_ticks()
+                        if current_time - last_click_time < DOUBLE_CLICK_TIME:
+                            # É um duplo-clique, então abrimos a tarefa
+                            current_node = clicked_on_task
+                        else:
+                            # É um clique simples, preparamos para arrastar
+                            selected_task_drag = clicked_on_task
+                            offset_x = selected_task_drag.rect.x - event.pos[0]
+                            offset_y = selected_task_drag.rect.y - event.pos[1]
+                        last_click_time = current_time
 
-            elif event.button == 3:
+            elif event.button == 3: # Botão Direito
+                # ... (lógica do botão direito sem alterações)
                 context_menu['active'] = True
                 context_menu['pos'] = event.pos
                 context_menu['task'] = clicked_on_task
@@ -153,11 +176,17 @@ while True:
                 selected_task_drag.rect.x = event.pos[0] + offset_x
                 selected_task_drag.rect.y = event.pos[1] + offset_y
                 
-    # --- DESENHO --- (Sem alterações)
+    # --- DESENHO ---
     tela.fill(COR_FUNDO)
+
     for task in current_node.children:
-        pygame.draw.rect(tela, COR_RETANGULO, task.rect)
+        # ### ALTERADO: Define a cor com base na existência de filhos
+        cor_fundo_retangulo = COR_RETANGULO_COM_FILHOS if task.children else COR_RETANGULO
+        
+        pygame.draw.rect(tela, cor_fundo_retangulo, task.rect)
         pygame.draw.rect(tela, COR_BORDA_RETANGULO, task.rect, width=2)
+        
+        # ... (resto da lógica de desenho do texto sem alterações)
         texto_surface = fonte_titulo.render(task.title, True, COR_TEXTO_TITULO)
         elipse_surface = None
         if task.body and task.body.strip():
@@ -171,5 +200,7 @@ while True:
         if elipse_surface:
             elipse_rect = elipse_surface.get_rect(midtop=(task.rect.centerx, texto_rect.bottom + PADDING_TITULO_ELIPSE))
             tela.blit(elipse_surface, elipse_rect)
+
     draw_context_menu()
+
     pygame.display.flip()
