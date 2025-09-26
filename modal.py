@@ -143,16 +143,9 @@ class EditModal:
                     self.title_text = self.title_text[:start] + event.unicode + self.title_text[end:]
                     self.title_selection_start = self.title_selection_end = start + len(event.unicode)
             
-            # ### LÓGICA DO CORPO COMPLETA E CORRIGIDA ###
+            # --- Lógica para o campo CORPO (VERSÃO CORRIGIDA) ---
             elif self.active_field == 'body':
-                # ### NOVO: Lógica das setas direcionais ###
-                if event.key == pygame.K_LEFT:
-                    new_pos = max(0, self.body_selection_end - 1)
-                    self.body_selection_start = self.body_selection_end = new_pos
-                elif event.key == pygame.K_RIGHT:
-                    new_pos = min(len(self.body_text), self.body_selection_end + 1)
-                    self.body_selection_start = self.body_selection_end = new_pos
-            elif self.active_field == 'body':
+                # Combinação de teclas (Ctrl + algo)
                 if event.mod & pygame.KMOD_CTRL:
                     if event.key == pygame.K_a:
                         self.body_selection_start, self.body_selection_end = 0, len(self.body_text)
@@ -171,20 +164,39 @@ class EditModal:
                         clipboard_text = pyperclip.paste()
                         self.body_text = self.body_text[:start] + clipboard_text + self.body_text[end:]
                         self.body_selection_start = self.body_selection_end = start + len(clipboard_text)
+
+                # Teclas de Ação (Backspace, Enter, Setas)
                 elif event.key == pygame.K_BACKSPACE:
                     if self.body_selection_start != self.body_selection_end:
                         start, end = min(self.body_selection_start, self.body_selection_end), max(self.body_selection_start, self.body_selection_end)
                         self.body_text = self.body_text[:start] + self.body_text[end:]
                         self.body_selection_start = self.body_selection_end = start
-                    elif len(self.body_text) > 0:
-                        self.body_text = self.body_text[:-1]
+                    elif self.body_selection_end > 0:
+                        pos = self.body_selection_end
+                        self.body_text = self.body_text[:pos-1] + self.body_text[pos:]
+                        self.body_selection_start = self.body_selection_end = pos - 1
+                
                 elif event.key == pygame.K_RETURN:
-                    self.body_text += '\n'
+                    start, end = min(self.body_selection_start, self.body_selection_end), max(self.body_selection_start, self.body_selection_end)
+                    self.body_text = self.body_text[:start] + '\n' + self.body_text[end:]
+                    self.body_selection_start = self.body_selection_end = start + 1
+
+                elif event.key == pygame.K_LEFT:
+                    new_pos = max(0, self.body_selection_end - 1)
+                    self.body_selection_start = self.body_selection_end = new_pos
+                
+                elif event.key == pygame.K_RIGHT:
+                    new_pos = min(len(self.body_text), self.body_selection_end + 1)
+                    self.body_selection_start = self.body_selection_end = new_pos
+                
+                # Digitação Normal
                 else:
                     start, end = min(self.body_selection_start, self.body_selection_end), max(self.body_selection_start, self.body_selection_end)
                     self.body_text = self.body_text[:start] + event.unicode + self.body_text[end:]
                     self.body_selection_start = self.body_selection_end = start + len(event.unicode)
-        return None
+
+
+            return None
     
     # update e draw não mudam
     def update(self):
