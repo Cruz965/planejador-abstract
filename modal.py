@@ -176,6 +176,8 @@ class EditModal:
             self.cursor_visible = not self.cursor_visible
             self.last_cursor_toggle = time_now
 
+    # Ficheiro: modal.py (SUBSTITUA O MÉTODO DRAW INTEIRO)
+
     def draw(self, screen):
         overlay = pygame.Surface((settings.LARGURA_TELA, settings.ALTURA_TELA), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 128))
@@ -184,7 +186,7 @@ class EditModal:
         pygame.draw.rect(screen, settings.COR_BORDA_RETANGULO, self.modal_rect, 2)
         mouse_pos = pygame.mouse.get_pos()
         
-        # --- Desenho dos Botões ---
+        # Desenho dos Botões
         is_hovering_close = self.close_button_rect.collidepoint(mouse_pos)
         text_color_x = settings.MODAL_CLOSE_X_COLOR_NORMAL
         if is_hovering_close:
@@ -202,13 +204,13 @@ class EditModal:
         concluido_text_rect = concluido_text.get_rect(center=self.concluido_button_rect.center)
         screen.blit(concluido_text, concluido_text_rect)
         
-        # --- Desenho dos Títulos dos Campos ---
+        # Desenho dos Títulos dos Campos
         title_label_surface = self.font_menu.render("Nome da Tarefa:", True, settings.COR_TEXTO_TITULO)
         screen.blit(title_label_surface, (self.title_input_rect.left, self.title_input_rect.top - 20))
         body_label_surface = self.font_menu.render("Descrição da Tarefa:", True, settings.COR_TEXTO_TITULO)
         screen.blit(body_label_surface, (self.body_input_rect.left, self.body_input_rect.top - 20))
         
-        # --- Desenho do Campo de Título ---
+        # Desenho do Campo de Título
         pygame.draw.rect(screen, settings.MODAL_INPUT_BG_COLOR, self.title_input_rect)
         border_color_title = settings.MODAL_INPUT_BORDER_ACTIVE if self.active_field == 'title' else settings.MODAL_INPUT_BORDER_INACTIVE
         pygame.draw.rect(screen, border_color_title, self.title_input_rect, 2)
@@ -235,64 +237,58 @@ class EditModal:
             title_surface = self.font_titulo.render(self.title_text, True, settings.COR_TEXTO_TITULO)
             screen.blit(title_surface, (self.title_input_rect.x + settings.MODAL_INPUT_PADDING, self.title_input_rect.y + settings.MODAL_INPUT_PADDING))
 
-        # --- Desenho do Campo de Corpo ---
+        # Desenho do Campo de Corpo
         pygame.draw.rect(screen, settings.MODAL_INPUT_BG_COLOR, self.body_input_rect)
         border_color_body = settings.MODAL_INPUT_BORDER_ACTIVE if self.active_field == 'body' else settings.MODAL_INPUT_BORDER_INACTIVE
         pygame.draw.rect(screen, border_color_body, self.body_input_rect, 2)
 
-        # ### ALTERADO: Lógica de desenho para o corpo com seleção visual precisa ###
         lines = self.body_text.split('\n')
         y_offset = self.body_input_rect.y + settings.MODAL_INPUT_PADDING
         char_index = 0
         sel_start, sel_end = min(self.body_selection_start, self.body_selection_end), max(self.body_selection_start, self.body_selection_end)
+
+        # ### CORRECÇÃO: Inicializa as variáveis do cursor ANTES do loop ###
+        cursor_y, cursor_x = -1, -1
 
         for line in lines:
             line_len = len(line)
             line_start_index = char_index
             line_end_index = char_index + line_len
             
-            # Divide a linha em partes: antes, durante e depois da seleção
-            local_sel_start = max(0, sel_start - line_start_index)
-            local_sel_end = min(line_len, sel_end - line_start_index)
-
-            part_before = line[:local_sel_start]
-            part_selected = line[local_sel_start:local_sel_end]
-            part_after = line[local_sel_end:]
-
-            # Renderiza as 3 partes
-            surf_before = self.font_corpo.render(part_before, True, settings.COR_TEXTO_CORPO)
-            surf_selected = self.font_corpo.render(part_selected, True, settings.COR_MENU_HOVER_TEXTO)
-            surf_after = self.font_corpo.render(part_after, True, settings.COR_TEXTO_CORPO)
-
-            x_offset = self.body_input_rect.x + settings.MODAL_INPUT_PADDING
-
-            # Prepara a área de recorte para não desenhar fora da caixa
-            screen.set_clip(self.body_input_rect.inflate(-10, -10))
-
-            # Desenha a parte antes da seleção
-            screen.blit(surf_before, (x_offset, y_offset))
-            x_offset += surf_before.get_width()
-            
-            # Desenha a seleção (fundo e texto)
-            if part_selected:
-                selection_rect = pygame.Rect(x_offset, y_offset, surf_selected.get_width(), surf_selected.get_height())
-                pygame.draw.rect(screen, settings.COR_MENU_HOVER_FUNDO, selection_rect)
-                screen.blit(surf_selected, (x_offset, y_offset))
-                x_offset += surf_selected.get_width()
-            
-            # Desenha a parte depois da seleção
-            screen.blit(surf_after, (x_offset, y_offset))
-
-            # Reseta a área de recorte
-            screen.set_clip(None)
+            # Lógica para encontrar a posição do cursor no corpo do texto
             if self.active_field == 'body' and self.body_selection_start == self.body_selection_end:
                 if line_start_index <= self.body_selection_end <= line_end_index:
                     local_cursor_pos = self.body_selection_end - line_start_index
                     text_up_to_cursor = line[:local_cursor_pos]
                     cursor_x = self.body_input_rect.x + settings.MODAL_INPUT_PADDING + self.font_corpo.size(text_up_to_cursor)[0]
                     cursor_y = y_offset
+            
+            # Desenho da linha (com seleção visual)
+            local_sel_start = max(0, sel_start - line_start_index)
+            local_sel_end = min(line_len, sel_end - line_start_index)
+            part_before, part_selected, part_after = line[:local_sel_start], line[local_sel_start:local_sel_end], line[local_sel_end:]
+            surf_before = self.font_corpo.render(part_before, True, settings.COR_TEXTO_CORPO)
+            surf_selected = self.font_corpo.render(part_selected, True, settings.COR_MENU_HOVER_TEXTO)
+            surf_after = self.font_corpo.render(part_after, True, settings.COR_TEXTO_CORPO)
+            x_offset = self.body_input_rect.x + settings.MODAL_INPUT_PADDING
+            
+            screen.set_clip(self.body_input_rect.inflate(-10, -10))
+            screen.blit(surf_before, (x_offset, y_offset))
+            x_offset += surf_before.get_width()
+            if part_selected:
+                selection_rect = pygame.Rect(x_offset, y_offset, surf_selected.get_width(), surf_selected.get_height())
+                pygame.draw.rect(screen, settings.COR_MENU_HOVER_FUNDO, selection_rect)
+                screen.blit(surf_selected, (x_offset, y_offset))
+                x_offset += surf_selected.get_width()
+            screen.blit(surf_after, (x_offset, y_offset))
+            screen.set_clip(None)
+            
             y_offset += self.font_corpo.get_height()
             char_index += line_len + 1
-        if self.active_field == 'body' and self.cursor_visible and cursor_y != -1:
-            cursor_height = self.font_corpo.get_height()
-            pygame.draw.line(screen, settings.COR_TEXTO_TITULO, (cursor_x, cursor_y), (cursor_x, cursor_y + cursor_height), 2)
+
+        # Desenha o cursor piscando para o corpo
+        if self.active_field == 'body' and self.cursor_visible and self.body_selection_start == self.body_selection_end:
+            # A verificação 'cursor_y != -1' já não é estritamente necessária aqui, mas não faz mal
+            if cursor_y != -1:
+                cursor_height = self.font_corpo.get_height()
+                pygame.draw.line(screen, settings.COR_TEXTO_TITULO, (cursor_x, cursor_y), (cursor_x, cursor_y + cursor_height), 2)
