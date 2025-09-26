@@ -55,6 +55,7 @@ class EditModal:
         self.is_selecting = False
         
         self.scroll_y = 0
+        self.body_cursor_rect = pygame.Rect(0, 0, 0, 0)
     
     def _save_changes_and_close(self):
         self.task.title = self.title_text
@@ -101,7 +102,30 @@ class EditModal:
             current_width += char_width
         
         return char_index + len(line_text)
+    def _ensure_cursor_visible(self):
+        """Ajusta o self.scroll_y para garantir que o cursor do corpo esteja na área visível."""
+        # A posição do cursor (self.body_cursor_rect) é calculada no método draw
+        cursor_top_abs = self.body_cursor_rect.y
+        cursor_bottom_abs = self.body_cursor_rect.bottom
+        
+        visible_top_abs = self.body_input_rect.y
+        visible_bottom_abs = self.body_input_rect.bottom
 
+        # Se o cursor estiver renderizado acima da área visível
+        if cursor_top_abs < visible_top_abs:
+            self.scroll_y -= (visible_top_abs - cursor_top_abs)
+        
+        # Se o cursor estiver renderizado abaixo da área visível
+        if cursor_bottom_abs > visible_bottom_abs:
+            self.scroll_y += (cursor_bottom_abs - visible_bottom_abs)
+        
+        # Garante que não rolamos para além dos limites (clamp)
+        self.scroll_y = max(0, self.scroll_y)
+        lines = self.body_text.split('\n')
+        total_text_height = len(lines) * self.font_corpo.get_height()
+        visible_height = self.body_input_rect.height - (settings.MODAL_INPUT_PADDING * 2)
+        max_scroll = max(0, total_text_height - visible_height)
+        self.scroll_y = min(self.scroll_y, max_scroll)
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             # Lógica do scroll
@@ -277,6 +301,7 @@ class EditModal:
                     self.scroll_y = cursor_y_rel
                 elif cursor_y_rel + line_height > self.scroll_y + visible_height:
                     self.scroll_y = cursor_y_rel + line_height - visible_height
+                self._ensure_cursor_visible()
 
         return None
     
@@ -288,7 +313,28 @@ class EditModal:
             self.last_cursor_toggle = time_now
 
     # Ficheiro: modal.py (SUBSTITUA O MÉTODO DRAW INTEIRO)
+ # NOVO método para centralizar o cálculo da posição do cursor
+    def update_cursor_rect(self):
+        if self.active_field == 'body':
+            lines = self.body_text.split('\n')
+            char_index = 0
+            cursor_found = False
+            y_offset = self.body_input_rect.y + settings.MODAL_INPUT_PADDING - self.scroll_y
 
+            for line in lines:
+                if char_index <= self.body_selection_end <= char_index + len(line):
+                    local_cursor_pos = self.body_selection_end - char_index
+                    text_up_to_cursor = line[:local_cursor_pos]
+                    cursor_x = self.body_input_rect.x + settings.MODAL_INPUT_PADDING + self.font_corpo.size(text_up_to_cursor)[0]
+                    self.body_cursor_rect = pygame.Rect(cursor_x, y_offset, 2, self.font_corpo.get_height())
+                    cursor_found = True
+                    break
+                char_index += len(line) + 1
+                y_offset += self.font_corpo.get_height()
+            
+            if not cursor_found: # Se o cursor estiver no final
+                last_line_y = y_offset - self.font_corpo.get_height()
+                self.body_cursor_rect = pygame.Rect(self.body_input_rect.x + settings.MODAL_INPUT_PADDING, last_line_y, 2, self.font_corpo.get_height())
     def draw(self, screen):
         overlay = pygame.Surface((settings.LARGURA_TELA, settings.ALTURA_TELA), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 128))
@@ -354,6 +400,34 @@ class EditModal:
         pygame.draw.rect(screen, border_color_body, self.body_input_rect, 2)
 
         lines = self.body_text.split('\n')
+        total_text_height = len(lines) * self.font_corpo.get_height()
+        visible_height = self.body_input_rect.height - (settings.MODAL_INPUT_PADDING * 2)
+
+        # ### ALTERADO: Lógica para desenhar a pista da scrollbar ###
+        if total_text_height > visible_height:
+            # Calcula a posição e o tamanho da pista com as novas margens
+            track_rect = pygame.Rect(
+                self.body_input_rect.right - settings.SCROLLBAR_WIDTH - settings.SCROLLBAR_PADDING,
+                self.body_input_rect.top + settings.SCROLLBAR_PADDING,
+                settings.SCROLLBAR_WIDTH,
+                self.body_input_rect.height - (settings.SCROLLBAR_PADDING * 2)
+            )
+            pygame.draw.rect(screen, settings.SCROLLBAR_TRACK_COLOR, track_rect)
+            # ### NOVO: Lógica para desenhar o Polegar ###
+            # 2. Calcula a altura do polegar
+            thumb_height_ratio = visible_height / total_text_height
+            thumb_height = track_rect.height * thumb_height_ratio
+            thumb_height = max(thumb_height, settings.SCROLLBAR_MIN_THUMB_HEIGHT) # Garante a altura mínima
+
+            # 3. Calcula a posição Y do polegar
+            max_scroll = total_text_height - visible_height
+            scroll_percentage = self.scroll_y / max_scroll if max_scroll > 0 else 0
+            thumb_y = track_rect.y + (track_rect.height - thumb_height) * scroll_percentage
+
+            # 4. Desenha o polegar
+            thumb_rect = pygame.Rect(track_rect.x, thumb_y, track_rect.width, thumb_height)
+            pygame.draw.rect(screen, settings.SCROLLBAR_THUMB_COLOR, thumb_rect)
+
         
         # ### ALTERE ESTA LINHA ###
         y_offset = self.body_input_rect.y + settings.MODAL_INPUT_PADDING - self.scroll_y
@@ -401,7 +475,9 @@ class EditModal:
 
         # Desenha o cursor piscando para o corpo
         if self.active_field == 'body' and self.cursor_visible and self.body_selection_start == self.body_selection_end:
-            # A verificação 'cursor_y != -1' já não é estritamente necessária aqui, mas não faz mal
+            screen.set_clip(self.body_input_rect.inflate(-10, -10))
+            pygame.draw.line(screen, settings.COR_TEXTO_TITULO, self.body_cursor_rect.topleft, self.body_cursor_rect.bottomleft, 2)
+            screen.set_clip(None)
             if cursor_y != -1:
                 cursor_height = self.font_corpo.get_height()
                 pygame.draw.line(screen, settings.COR_TEXTO_TITULO, (cursor_x, cursor_y), (cursor_x, cursor_y + cursor_height), 2)

@@ -74,6 +74,7 @@ PADDING_TITULO_ELIPSE = 5
 MODAL_BODY_SCROLL_SPEED = 20 # pixels por "tick" da roda do rato
 # ### NOVO: Configurações da Scrollbar ###
 SCROLLBAR_WIDTH = 15
-SCROLLBAR_TRACK_COLOR = (220, 220, 220) # Cinza claro para a pista de fundo
-SCROLLBAR_THUMB_COLOR = (160, 160, 160) # Cinza mais escuro para a parte móvel
-SCROLLBAR_MIN_THUMB_HEIGHT = 20         # Altura mínima para o polegar não desaparecer
+SCROLLBAR_PADDING = 3                   # ### ADICIONE ESTA LINHA ###
+SCROLLBAR_TRACK_COLOR = (220, 220, 220)
+SCROLLBAR_THUMB_COLOR = (160, 160, 160)
+SCROLLBAR_MIN_THUMB_HEIGHT = 20
