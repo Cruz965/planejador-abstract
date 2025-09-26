@@ -100,8 +100,17 @@ class EditModal:
         if event.type == pygame.KEYDOWN:
             if self.active_field is None and event.key == pygame.K_RETURN: return self._save_changes_and_close()
 
+            # --- Lógica para o campo TÍTULO ---
             if self.active_field == 'title':
-                # Lógica do Título (sem alterações)
+                # ### NOVO: Lógica das setas direcionais ###
+                if event.key == pygame.K_LEFT:
+                    # Move o cursor para a esquerda, com um limite em 0
+                    new_pos = max(0, self.title_selection_end - 1)
+                    self.title_selection_start = self.title_selection_end = new_pos
+                elif event.key == pygame.K_RIGHT:
+                    # Move o cursor para a direita, com um limite no final do texto
+                    new_pos = min(len(self.title_text), self.title_selection_end + 1)
+                    self.title_selection_start = self.title_selection_end = new_pos
                 if event.mod & pygame.KMOD_CTRL:
                     if event.key == pygame.K_a: self.title_selection_start, self.title_selection_end = 0, len(self.title_text)
                     elif event.key == pygame.K_c:
@@ -135,6 +144,14 @@ class EditModal:
                     self.title_selection_start = self.title_selection_end = start + len(event.unicode)
             
             # ### LÓGICA DO CORPO COMPLETA E CORRIGIDA ###
+            elif self.active_field == 'body':
+                # ### NOVO: Lógica das setas direcionais ###
+                if event.key == pygame.K_LEFT:
+                    new_pos = max(0, self.body_selection_end - 1)
+                    self.body_selection_start = self.body_selection_end = new_pos
+                elif event.key == pygame.K_RIGHT:
+                    new_pos = min(len(self.body_text), self.body_selection_end + 1)
+                    self.body_selection_start = self.body_selection_end = new_pos
             elif self.active_field == 'body':
                 if event.mod & pygame.KMOD_CTRL:
                     if event.key == pygame.K_a:
