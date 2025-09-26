@@ -108,6 +108,12 @@ class EditModal:
                         if self.title_selection_start != self.title_selection_end:
                             start, end = min(self.title_selection_start, self.title_selection_end), max(self.title_selection_start, self.title_selection_end)
                             pyperclip.copy(self.title_text[start:end])
+                    elif event.key == pygame.K_x:
+                        if self.title_selection_start != self.title_selection_end:
+                            start, end = min(self.title_selection_start, self.title_selection_end), max(self.title_selection_start, self.title_selection_end)
+                            pyperclip.copy(self.title_text[start:end])
+                            self.title_text = self.title_text[:start] + self.title_text[end:]
+                            self.title_selection_start = self.title_selection_end = start
                     elif event.key == pygame.K_v:
                         start, end = min(self.title_selection_start, self.title_selection_end), max(self.title_selection_start, self.title_selection_end)
                         clipboard_text = pyperclip.paste()
@@ -137,6 +143,12 @@ class EditModal:
                         if self.body_selection_start != self.body_selection_end:
                             start, end = min(self.body_selection_start, self.body_selection_end), max(self.body_selection_start, self.body_selection_end)
                             pyperclip.copy(self.body_text[start:end])
+                    elif event.key == pygame.K_x:
+                        if self.body_selection_start != self.body_selection_end:
+                            start, end = min(self.body_selection_start, self.body_selection_end), max(self.body_selection_start, self.body_selection_end)
+                            pyperclip.copy(self.body_text[start:end])
+                            self.body_text = self.body_text[:start] + self.body_text[end:]
+                            self.body_selection_start = self.body_selection_end = start
                     elif event.key == pygame.K_v:
                         start, end = min(self.body_selection_start, self.body_selection_end), max(self.body_selection_start, self.body_selection_end)
                         clipboard_text = pyperclip.paste()
