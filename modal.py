@@ -53,7 +53,14 @@ class EditModal:
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if self.close_button_rect.collidepoint(event.pos):
                 return 'close'
-            
+        
+            # ### FOCO AQUI: Lógica do botão "Concluído" ###
+            if self.concluido_button_rect.collidepoint(event.pos):
+                # 1. Salva as alterações no objeto original da tarefa
+                self.task.title = self.edited_title
+                self.task.body = self.edited_body # Já preparamos para o futuro
+                # 2. Retorna o sinal para fechar a janela
+                return 'close'
             if self.title_input_rect.collidepoint(event.pos):
                 self.active_field = 'title'
                 cursor_pos = self._get_char_index_from_pos(event.pos)
@@ -122,27 +129,52 @@ class EditModal:
             self.last_cursor_toggle = time_now
 
     def draw(self, screen):
+        """Desenha a janela modal e todos os seus componentes na tela."""
+        # 1. Desenha o overlay semi-transparente
         overlay = pygame.Surface((settings.LARGURA_TELA, settings.ALTURA_TELA), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 128))
         screen.blit(overlay, (0, 0))
+
+        # 2. Desenha o fundo e a borda da janela modal
         pygame.draw.rect(screen, settings.COR_FUNDO, self.modal_rect)
         pygame.draw.rect(screen, settings.COR_BORDA_RETANGULO, self.modal_rect, 2)
+
+        # 3. Desenha os componentes da janela
         mouse_pos = pygame.mouse.get_pos()
+
+        # --- Desenho do Botão de Fechar 'X' ---
         is_hovering_close = self.close_button_rect.collidepoint(mouse_pos)
         text_color_x = settings.MODAL_CLOSE_X_COLOR_NORMAL
         if is_hovering_close:
             pygame.draw.rect(screen, settings.MODAL_CLOSE_BG_COLOR_HOVER, self.close_button_rect)
             text_color_x = settings.MODAL_CLOSE_X_COLOR_HOVER
+        
         close_text = self.font_titulo.render("X", True, text_color_x)
         close_text_rect = close_text.get_rect(center=self.close_button_rect.center)
         screen.blit(close_text, close_text_rect)
-        pygame.draw.rect(screen, (200, 200, 200), self.concluido_button_rect)
+
+        # --- Desenho do Botão "Concluído" (COM HOVER E BORDA) ---
+        is_hovering_done = self.concluido_button_rect.collidepoint(mouse_pos)
+        
+        # Escolhe a cor de fundo com base no hover
+        bg_color = settings.MODAL_DONE_BG_COLOR_HOVER if is_hovering_done else settings.MODAL_DONE_BG_COLOR_NORMAL
+        
+        # Desenha o fundo sólido
+        pygame.draw.rect(screen, bg_color, self.concluido_button_rect)
+        # Desenha a borda preta por cima
+        pygame.draw.rect(screen, settings.MODAL_DONE_BORDER_COLOR, self.concluido_button_rect, settings.MODAL_DONE_BORDER_WIDTH)
+        
+        # Desenha o texto
         concluido_text = self.font_menu.render("Concluído", True, (0, 0, 0))
         concluido_text_rect = concluido_text.get_rect(center=self.concluido_button_rect.center)
         screen.blit(concluido_text, concluido_text_rect)
+        
+        # --- Desenho do Campo de Edição do Título ---
         pygame.draw.rect(screen, settings.MODAL_INPUT_BG_COLOR, self.title_input_rect)
         border_color = settings.MODAL_INPUT_BORDER_ACTIVE if self.active_field == 'title' else settings.MODAL_INPUT_BORDER_INACTIVE
         pygame.draw.rect(screen, border_color, self.title_input_rect, 2)
+        
+        # (Lógica completa de desenho de texto e cursor)
         text_x = self.title_input_rect.x + settings.MODAL_INPUT_PADDING
         text_y = self.title_input_rect.y + settings.MODAL_INPUT_PADDING
         start_index, end_index = min(self.selection_start, self.selection_end), max(self.selection_start, self.selection_end)

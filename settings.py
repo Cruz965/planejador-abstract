@@ -1,47 +1,64 @@
-# --- CONFIGURACOES E CONSTANTES --- (Sem alterações)
+# Ficheiro: settings.py (VERSÃO CORRETA PARA O TESTE)
+
 ARQUIVO_SAVE = "projeto.json"
 LARGURA_TELA, ALTURA_TELA = 1280, 720
+
+# Tema Claro
 COR_FUNDO = (240, 240, 240)
 COR_RETANGULO = (255, 255, 255)
 COR_RETANGULO_COM_FILHOS = (210, 245, 210)
 COR_BORDA_RETANGULO = (0, 0, 0)
 COR_TEXTO_TITULO = (20, 20, 20)
 COR_TEXTO_CORPO = (80, 80, 80)
+
+# Cores do Menu de Contexto
 COR_MENU_FUNDO = (250, 250, 250)
 COR_MENU_BORDA = (180, 180, 180)
 COR_TEXTO_MENU_ATIVO = (20, 20, 20)
 COR_TEXTO_MENU_INATIVO = (150, 150, 150)
 COR_MENU_HOVER_FUNDO = (205, 230, 255)
 COR_MENU_HOVER_TEXTO = (0, 0, 0)
+
 LARGURA_RETANGULO_ABS = int(LARGURA_TELA * 0.15)
-ALTURA_RETANGULO_ABS = int(ALTURA_TELA * 0.12)
+ALTURA_RETANGULO_ABS = int(LARGURA_TELA * 0.12)
 TAMANHO_RETANGULO = (LARGURA_RETANGULO_ABS, ALTURA_RETANGULO_ABS)
+
+# Fontes
 TAMANHO_FONTE_TITULO = 18
 TAMANHO_FONTE_MENU = 16
 PADDING_TITULO_ELIPSE = 5
+
+# Configurações do Menu de Contexto
 MENU_PADDING_ABS = int(LARGURA_TELA * 0.008)
 MENU_MIN_WIDTH_ABS = int(LARGURA_TELA * 0.12)
 MENU_ITEM_SPACING = 5
+
+# Constante para detetar o duplo-clique (em milissegundos)
 DOUBLE_CLICK_TIME = 500 
-# ### NOVO: Configurações da Janela Modal ###
-MODAL_WIDTH_REL = 0.6  # 60% da largura da tela
-MODAL_HEIGHT_REL = 0.7 # 70% da altura da tela
+
+# Configurações da Janela Modal
+MODAL_WIDTH_REL = 0.6
+MODAL_HEIGHT_REL = 0.7
 
 # Botão de Fechar (X)
 MODAL_CLOSE_BUTTON_SIZE = 30
 MODAL_CLOSE_BUTTON_MARGIN = 10
-MODAL_CLOSE_X_COLOR_NORMAL = (20, 20, 20)      # Preto
-MODAL_CLOSE_X_COLOR_HOVER = (255, 255, 255)   # Branco
-MODAL_CLOSE_BG_COLOR_HOVER = (255, 100, 100)  # Vermelho
+MODAL_CLOSE_X_COLOR_NORMAL = (20, 20, 20)
+MODAL_CLOSE_X_COLOR_HOVER = (255, 255, 255)
+MODAL_CLOSE_BG_COLOR_HOVER = (255, 100, 100)
 
-# Botão de Concluir
+# ### ATUALIZADO: Configurações do Botão Concluído (Versão Final) ###
 MODAL_DONE_BUTTON_WIDTH = 100
 MODAL_DONE_BUTTON_HEIGHT = 30
 MODAL_DONE_BUTTON_MARGIN = 15
-# ### NOVO: Configurações dos Campos de Edição ###
-MODAL_INPUT_BG_COLOR = (255, 255, 255)       # Fundo branco
-MODAL_INPUT_BORDER_INACTIVE = (180, 180, 180) # Borda cinza
-MODAL_INPUT_BORDER_ACTIVE = (0, 120, 215)   # Borda azul (foco do Windows)
+MODAL_DONE_BG_COLOR_NORMAL = (225, 225, 225)      # Cinza claro sólido
+MODAL_DONE_BG_COLOR_HOVER = (200, 200, 200)       # Cinza um pouco mais escuro para o hover
+MODAL_DONE_BORDER_COLOR = (0, 0, 0)                # Cor da borda preta
+MODAL_DONE_BORDER_WIDTH = 2          # Borda BEM grossa para o teste
+
+# Configurações dos Campos de Edição
+MODAL_INPUT_BG_COLOR = (255, 255, 255)
+MODAL_INPUT_BORDER_INACTIVE = (180, 180, 180)
+MODAL_INPUT_BORDER_ACTIVE = (0, 120, 215)
 MODAL_INPUT_PADDING = 10
-CURSOR_BLINK_RATE = 500 # em milissegundos
-ARQUIVO_SAVE = "projeto.json"
+CURSOR_BLINK_RATE = 500
