@@ -1,13 +1,13 @@
-# Arquivo: task.py (CORRIGIDO)
+# Arquivo: task.py (VERSÃO CORRETA)
 import pygame
-import settings
+import settings # Importa nosso novo arquivo de configurações
+
 class TaskNode:
     def __init__(self, title, body, parent=None, pos=(10, 10), size=(200, 100)):
         self.title = title
         self.body = body
         self.parent = parent
         self.children = []
-        
         self.rect = pygame.Rect(pos[0], pos[1], size[0], size[1])
         self.is_completed = False
 
@@ -23,17 +23,15 @@ class TaskNode:
         }
 
     @staticmethod
-    def from_dict(data, size, parent=None): # <--- MUDANÇA AQUI: adicionado o parâmetro 'size'
-        """Cria um nó (e todos os seus filhos) a partir de um dicionário."""
+    def from_dict(data, parent=None): # <-- Assinatura correta, sem 'size'
         node = TaskNode(
             title=data['title'],
             body=data['body'],
             parent=parent,
             pos=data['pos'],
-            size=size # <--- MUDANÇA AQUI: usando o 'size' do parâmetro
+            size=settings.TAMANHO_RETANGULO # <-- Usa o valor direto de settings
         )
         for child_data in data['children']:
-            # <--- MUDANÇA AQUI: passando 'size' na chamada recursiva
-            child_node = TaskNode.from_dict(child_data, size, parent=node)
+            child_node = TaskNode.from_dict(child_data, parent=node)
             node.add_child(child_node)
         return node

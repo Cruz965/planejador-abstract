@@ -38,4 +38,10 @@ MODAL_CLOSE_BG_COLOR_HOVER = (255, 100, 100)  # Vermelho
 MODAL_DONE_BUTTON_WIDTH = 100
 MODAL_DONE_BUTTON_HEIGHT = 30
 MODAL_DONE_BUTTON_MARGIN = 15
+# ### NOVO: Configurações dos Campos de Edição ###
+MODAL_INPUT_BG_COLOR = (255, 255, 255)       # Fundo branco
+MODAL_INPUT_BORDER_INACTIVE = (180, 180, 180) # Borda cinza
+MODAL_INPUT_BORDER_ACTIVE = (0, 120, 215)   # Borda azul (foco do Windows)
+MODAL_INPUT_PADDING = 10
+CURSOR_BLINK_RATE = 500 # em milissegundos
 ARQUIVO_SAVE = "projeto.json"
