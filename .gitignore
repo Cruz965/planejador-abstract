@@ -1,0 +1,10 @@
+# Arquivo de dados do usuário
+projeto.json
+
+# Arquivos de cache do Python
+__pycache__/
+*.pyc
+
+# Pastas de ambiente virtual (se você usar)
+.venv/
+venv/
