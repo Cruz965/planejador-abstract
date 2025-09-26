@@ -1,4 +1,4 @@
-# Arquivo: modal.py (CORRIGIDO)
+# Ficheiro: modal.py (VERSÃO COMPLETA E CORRIGIDA)
 import pygame
 import settings
 import pyperclip
@@ -28,19 +28,34 @@ class EditModal:
         self.active_field = None
         self.cursor_visible = True
         self.last_cursor_toggle = pygame.time.get_ticks()
+
+        padding = 20
+        label_height = 25
         self.title_input_rect = pygame.Rect(
-            self.modal_rect.left + settings.MODAL_INPUT_PADDING,
-            self.modal_rect.top + 50,
-            self.modal_rect.width - (settings.MODAL_INPUT_PADDING * 2),
+            self.modal_rect.left + padding,
+            self.modal_rect.top + 50 + label_height,
+            self.modal_rect.width - (padding * 2),
             40
         )
+        self.body_input_rect = pygame.Rect(
+            self.modal_rect.left + padding,
+            self.title_input_rect.bottom + padding + label_height,
+            self.modal_rect.width - (padding * 2),
+            self.modal_rect.bottom - self.title_input_rect.bottom - (padding * 3) - self.concluido_button_rect.height - label_height
+        )
+
         self.selection_start = 0
         self.selection_end = 0
         self.is_selecting = False
-
+    
+    def _save_changes_and_close(self):
+        self.task.title = self.edited_title
+        self.task.body = self.edited_body
+        return 'close'
 
     def _get_char_index_from_pos(self, pos):
         rel_x = pos[0] - (self.title_input_rect.x + settings.MODAL_INPUT_PADDING)
+        if rel_x < 0: return 0
         current_width = 0
         for i, char in enumerate(self.edited_title):
             char_width = self.font_titulo.size(char)[0]
@@ -53,57 +68,47 @@ class EditModal:
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if self.close_button_rect.collidepoint(event.pos):
                 return 'close'
-        
-            # ### FOCO AQUI: Lógica do botão "Concluído" ###
             if self.concluido_button_rect.collidepoint(event.pos):
-                # 1. Salva as alterações no objeto original da tarefa
-                self.task.title = self.edited_title
-                self.task.body = self.edited_body # Já preparamos para o futuro
-                # 2. Retorna o sinal para fechar a janela
-                return 'close'
+                return self._save_changes_and_close()
+
             if self.title_input_rect.collidepoint(event.pos):
                 self.active_field = 'title'
                 cursor_pos = self._get_char_index_from_pos(event.pos)
                 self.selection_start = self.selection_end = cursor_pos
-                self.is_selecting = True # Começa o processo de seleção
+                self.is_selecting = True
+            elif self.body_input_rect.collidepoint(event.pos):
+                self.active_field = 'body'
+                self.selection_start = self.selection_end = 0
+                self.is_selecting = False
             else:
                 self.active_field = None
-                self.selection_start = self.selection_end = 0
                 self.is_selecting = False
 
         if event.type == pygame.MOUSEMOTION:
-            # Se o mouse estiver se movendo com o botão pressionado, atualiza a seleção
             if self.active_field == 'title' and self.is_selecting:
                 cursor_pos = self._get_char_index_from_pos(event.pos)
                 self.selection_end = cursor_pos
 
         if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-            # Finaliza o processo de seleção
             self.is_selecting = False
 
         if event.type == pygame.KEYDOWN:
+            if self.active_field is None and event.key == pygame.K_RETURN:
+                return self._save_changes_and_close()
+
             if self.active_field == 'title':
-                # Combinação de teclas (Ctrl + algo)
                 if event.mod & pygame.KMOD_CTRL:
-                    if event.key == pygame.K_a: # Ctrl+A
-                        self.selection_start = 0
-                        self.selection_end = len(self.edited_title)
-                    
-                    # ### NOVO: Lógica Ctrl+C (Copiar) ###
+                    if event.key == pygame.K_a:
+                        self.selection_start, self.selection_end = 0, len(self.edited_title)
                     elif event.key == pygame.K_c:
                         if self.selection_start != self.selection_end:
-                            start = min(self.selection_start, self.selection_end)
-                            end = max(self.selection_start, self.selection_end)
+                            start, end = min(self.selection_start, self.selection_end), max(self.selection_start, self.selection_end)
                             pyperclip.copy(self.edited_title[start:end])
-
-                    # ### NOVO: Lógica Ctrl+V (Colar) ###
                     elif event.key == pygame.K_v:
-                        start = min(self.selection_start, self.selection_end)
-                        end = max(self.selection_start, self.selection_end)
-                        self.edited_title = self.edited_title[:start] + pyperclip.paste() + self.edited_title[end:]
-                        self.selection_start = self.selection_end = start + len(pyperclip.paste())
-
-                # Teclas normais (sem Ctrl)
+                        start, end = min(self.selection_start, self.selection_end), max(self.selection_start, self.selection_end)
+                        clipboard_text = pyperclip.paste()
+                        self.edited_title = self.edited_title[:start] + clipboard_text + self.edited_title[end:]
+                        self.selection_start = self.selection_end = start + len(clipboard_text)
                 elif event.key == pygame.K_BACKSPACE:
                     if self.selection_start != self.selection_end:
                         start, end = min(self.selection_start, self.selection_end), max(self.selection_start, self.selection_end)
@@ -115,13 +120,13 @@ class EditModal:
                         self.selection_start = self.selection_end = pos - 1
                 elif event.key == pygame.K_RETURN:
                     self.active_field = None
-                    self.selection_start = self.selection_end = 0
                 else:
                     start, end = min(self.selection_start, self.selection_end), max(self.selection_start, self.selection_end)
                     self.edited_title = self.edited_title[:start] + event.unicode + self.edited_title[end:]
                     self.selection_start = self.selection_end = start + len(event.unicode)
         
         return None
+
     def update(self):
         time_now = pygame.time.get_ticks()
         if time_now - self.last_cursor_toggle > settings.CURSOR_BLINK_RATE:
@@ -129,58 +134,40 @@ class EditModal:
             self.last_cursor_toggle = time_now
 
     def draw(self, screen):
-        """Desenha a janela modal e todos os seus componentes na tela."""
-        # 1. Desenha o overlay semi-transparente
         overlay = pygame.Surface((settings.LARGURA_TELA, settings.ALTURA_TELA), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 128))
         screen.blit(overlay, (0, 0))
-
-        # 2. Desenha o fundo e a borda da janela modal
         pygame.draw.rect(screen, settings.COR_FUNDO, self.modal_rect)
         pygame.draw.rect(screen, settings.COR_BORDA_RETANGULO, self.modal_rect, 2)
-
-        # 3. Desenha os componentes da janela
         mouse_pos = pygame.mouse.get_pos()
-
-        # --- Desenho do Botão de Fechar 'X' ---
         is_hovering_close = self.close_button_rect.collidepoint(mouse_pos)
         text_color_x = settings.MODAL_CLOSE_X_COLOR_NORMAL
         if is_hovering_close:
             pygame.draw.rect(screen, settings.MODAL_CLOSE_BG_COLOR_HOVER, self.close_button_rect)
             text_color_x = settings.MODAL_CLOSE_X_COLOR_HOVER
-        
         close_text = self.font_titulo.render("X", True, text_color_x)
         close_text_rect = close_text.get_rect(center=self.close_button_rect.center)
         screen.blit(close_text, close_text_rect)
-
-        # --- Desenho do Botão "Concluído" (COM HOVER E BORDA) ---
         is_hovering_done = self.concluido_button_rect.collidepoint(mouse_pos)
-        
-        # Escolhe a cor de fundo com base no hover
         bg_color = settings.MODAL_DONE_BG_COLOR_HOVER if is_hovering_done else settings.MODAL_DONE_BG_COLOR_NORMAL
-        
-        # Desenha o fundo sólido
         pygame.draw.rect(screen, bg_color, self.concluido_button_rect)
-        # Desenha a borda preta por cima
         pygame.draw.rect(screen, settings.MODAL_DONE_BORDER_COLOR, self.concluido_button_rect, settings.MODAL_DONE_BORDER_WIDTH)
-        
-        # Desenha o texto
         concluido_text = self.font_menu.render("Concluído", True, (0, 0, 0))
         concluido_text_rect = concluido_text.get_rect(center=self.concluido_button_rect.center)
         screen.blit(concluido_text, concluido_text_rect)
         
-        # --- Desenho do Campo de Edição do Título ---
-        pygame.draw.rect(screen, settings.MODAL_INPUT_BG_COLOR, self.title_input_rect)
-        border_color = settings.MODAL_INPUT_BORDER_ACTIVE if self.active_field == 'title' else settings.MODAL_INPUT_BORDER_INACTIVE
-        pygame.draw.rect(screen, border_color, self.title_input_rect, 2)
+        title_label_surface = self.font_menu.render("Nome da Tarefa:", True, settings.COR_TEXTO_TITULO)
+        screen.blit(title_label_surface, (self.title_input_rect.left, self.title_input_rect.top - 20))
+        body_label_surface = self.font_menu.render("Descrição da Tarefa:", True, settings.COR_TEXTO_TITULO)
+        screen.blit(body_label_surface, (self.body_input_rect.left, self.body_input_rect.top - 20))
         
-        # (Lógica completa de desenho de texto e cursor)
-        text_x = self.title_input_rect.x + settings.MODAL_INPUT_PADDING
-        text_y = self.title_input_rect.y + settings.MODAL_INPUT_PADDING
+        pygame.draw.rect(screen, settings.MODAL_INPUT_BG_COLOR, self.title_input_rect)
+        border_color_title = settings.MODAL_INPUT_BORDER_ACTIVE if self.active_field == 'title' else settings.MODAL_INPUT_BORDER_INACTIVE
+        pygame.draw.rect(screen, border_color_title, self.title_input_rect, 2)
+        
+        text_x, text_y = self.title_input_rect.x + settings.MODAL_INPUT_PADDING, self.title_input_rect.y + settings.MODAL_INPUT_PADDING
         start_index, end_index = min(self.selection_start, self.selection_end), max(self.selection_start, self.selection_end)
-        text_before = self.edited_title[:start_index]
-        text_selected = self.edited_title[start_index:end_index]
-        text_after = self.edited_title[end_index:]
+        text_before, text_selected, text_after = self.edited_title[:start_index], self.edited_title[start_index:end_index], self.edited_title[end_index:]
         surface_before = self.font_titulo.render(text_before, True, settings.COR_TEXTO_TITULO)
         surface_selected = self.font_titulo.render(text_selected, True, settings.COR_MENU_HOVER_TEXTO)
         surface_after = self.font_titulo.render(text_after, True, settings.COR_TEXTO_TITULO)
@@ -195,3 +182,7 @@ class EditModal:
             cursor_pos_x = text_x + self.font_titulo.size(self.edited_title[:self.selection_end])[0]
             cursor_height = self.font_titulo.get_height()
             pygame.draw.line(screen, settings.COR_TEXTO_TITULO, (cursor_pos_x, text_y), (cursor_pos_x, text_y + cursor_height), 2)
+
+        pygame.draw.rect(screen, settings.MODAL_INPUT_BG_COLOR, self.body_input_rect)
+        border_color_body = settings.MODAL_INPUT_BORDER_ACTIVE if self.active_field == 'body' else settings.MODAL_INPUT_BORDER_INACTIVE
+        pygame.draw.rect(screen, border_color_body, self.body_input_rect, 2)
