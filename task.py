@@ -1,6 +1,6 @@
 # Arquivo: task.py (CORRIGIDO)
 import pygame
-
+import settings
 class TaskNode:
     def __init__(self, title, body, parent=None, pos=(10, 10), size=(200, 100)):
         self.title = title
