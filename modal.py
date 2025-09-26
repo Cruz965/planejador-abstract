@@ -70,8 +70,37 @@ class EditModal:
             current_width += char_width
         return len(self.title_text)
 
+    def _get_body_char_index_from_pos(self, pos):
+        """Calcula o índice do caractere no texto do corpo com base na posição (x, y) do rato."""
+        lines = self.body_text.split('\n')
+        char_index = 0
+        
+        # Posição relativa Y dentro da caixa de texto
+        rel_y = pos[1] - (self.body_input_rect.y + settings.MODAL_INPUT_PADDING)
+        
+        # Descobre em que linha o clique ocorreu
+        line_height = self.font_corpo.get_height()
+        clicked_line_index = int(rel_y / line_height)
+        clicked_line_index = max(0, min(clicked_line_index, len(lines) - 1)) # Garante que está dentro dos limites
+        
+        # Calcula o índice de caracteres até ao início da linha clicada
+        for i in range(clicked_line_index):
+            char_index += len(lines[i]) + 1 # +1 para o '\n'
+
+        # Agora, calcula a posição X na linha clicada
+        line_text = lines[clicked_line_index]
+        rel_x = pos[0] - (self.body_input_rect.x + settings.MODAL_INPUT_PADDING)
+        
+        current_width = 0
+        for i, char in enumerate(line_text):
+            char_width = self.font_corpo.size(char)[0]
+            if rel_x < current_width + char_width / 2:
+                return char_index + i
+            current_width += char_width
+        
+        return char_index + len(line_text)
+
     def handle_event(self, event):
-        # Lógica de MOUSE (sem alterações)
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if self.close_button_rect.collidepoint(event.pos): return 'close'
             if self.concluido_button_rect.collidepoint(event.pos): return self._save_changes_and_close()
@@ -83,15 +112,21 @@ class EditModal:
                 self.is_selecting = True
             elif self.body_input_rect.collidepoint(event.pos):
                 self.active_field = 'body'
-                # (Ainda sem posicionamento de cursor com rato para o corpo)
-                self.is_selecting = True 
+                # ### ALTERADO: Usa o novo método para o corpo ###
+                cursor_pos = self._get_body_char_index_from_pos(event.pos)
+                self.body_selection_start = self.body_selection_end = cursor_pos
+                self.is_selecting = True
             else:
                 self.active_field = None
                 self.is_selecting = False
-        
+
         if event.type == pygame.MOUSEMOTION:
-            if self.active_field == 'title' and self.is_selecting:
-                self.title_selection_end = self._get_char_index_from_pos(event.pos)
+            if self.is_selecting:
+                if self.active_field == 'title':
+                    self.title_selection_end = self._get_char_index_from_pos(event.pos)
+                # ### NOVO: Lógica de arrastar para o corpo ###
+                elif self.active_field == 'body':
+                    self.body_selection_end = self._get_body_char_index_from_pos(event.pos)
 
         if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
             self.is_selecting = False
