@@ -30,7 +30,7 @@ def carregar_projeto(filename):
     else:
         print("Nenhum arquivo de save encontrado. Criando novo projeto.")
         root = TaskNode("Raiz", "Nó raiz do sistema")
-        tarefa_inicial = TaskNode("Meu Primeiro Projeto", "Clique com o direito para começar.", parent=root, pos=(20, 20), size=settings.TAMANHO_RETANGULO)
+        tarefa_inicial = TaskNode("Meu Primeiro Projeto", "", ...) # Corpo inicial vazio
         root.add_child(tarefa_inicial)
         return root
 
