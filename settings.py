@@ -6,7 +6,10 @@ LARGURA_TELA, ALTURA_TELA = 1280, 720
 # Tema Claro
 COR_FUNDO = (240, 240, 240)
 COR_RETANGULO = (255, 255, 255)
-COR_RETANGULO_COM_FILHOS = (210, 245, 210)
+COR_RETANGULO_COM_FILHOS = (200, 220, 255)   
+
+COR_RETANGULO_COMPLETO = (210, 245, 210)             # Verde claro (Completo)
+COR_RETANGULO_DESENVOLVIMENTO = (255, 250, 205)      # Amarelo claro (Em Desenvolvimento)
 COR_BORDA_RETANGULO = (0, 0, 0)
 COR_TEXTO_TITULO = (20, 20, 20)
 COR_TEXTO_CORPO = (20, 20, 20)   # Corpo do texto em preto, igual ao título
@@ -78,3 +81,12 @@ SCROLLBAR_PADDING = 3                   # ### ADICIONE ESTA LINHA ###
 SCROLLBAR_TRACK_COLOR = (220, 220, 220)
 SCROLLBAR_THUMB_COLOR = (160, 160, 160)
 SCROLLBAR_MIN_THUMB_HEIGHT = 20
+# Ficheiro: settings.py (ADICIONE AO FINAL)
+
+# ### NOVO: Configurações da Lista de Navegação (Tree View) ###
+TREE_VIEW_X_START = 15      # Posição X inicial da lista
+TREE_VIEW_Y_START = 15      # Posição Y inicial da lista
+TREE_INDENT_WIDTH = 20      # Espaço de indentação por cada nível
+TREE_MAX_CHARS = 30         # Máximo de caracteres a mostrar por título
+TREE_FONT_SIZE = 16
+TREE_LINE_SPACING = 20      # Espaço vertical entre cada item
